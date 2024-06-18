@@ -1,15 +1,19 @@
 import pygame, sys
 from pygame.locals import *
+import time
 
 pygame.font.init()
 
 WHITE = (255, 255, 255)
 BLUE = (10, 95, 230)
 RED = (219, 18, 18)
+PURPLE = (129, 14, 158)
 BLACK = (0, 0, 0)
+GREEN = (10, 163, 53)
 GOLD = (255, 215, 0)
 HIGH = (160, 190, 255)
 GRAY = (194, 194, 194)
+LIGHT_BLUE = (191, 228, 255)
 
 NORTHWEST = "northwest"
 NORTHEAST = "northeast"
@@ -141,20 +145,24 @@ class Game:
 	def run(self):
 		self.setup()
 		run = True
+		bot = Bot(self)
 		while run:
-
 			if self.turn == self.player1_color:
-				#print("LOL")
-				self.player_turn()
+				if self.player1_bot:
+					print("bablbla")
+
+				else:
+					self.player_turn()
+
 				self.update()
 
 			if self.turn == self.player2_color:
-				#print("LOL2")
-				self.player_turn()
+				if self.player2_bot:	
+					print("bablbla")
+
+				else:
+					self.player_turn()
 				self.update()
-
-		# tu bedzie obslugowianie kto gra w warcaby (bot/czlowiek)
-
 		
 class GUI:
 	def __init__(self):
@@ -242,35 +250,35 @@ class GUI:
 		player2_bot = False
 		game_style = "Classic"
 
-		player_colors = [RED, BLUE, GRAY]
-		game_styles = ["Classic", "Modern", "Black and white"]		
+		player_colors = [RED, BLUE, GRAY, PURPLE, GREEN]
+		game_styles = ["Classic", "Modern", "Black and white"]
 
 		while True:
-			self.screen.fill(WHITE)
+			self.screen.fill(LIGHT_BLUE)
 
-			self.draw_menu_text('Main Menu', font, BLACK, self.screen, 20, 20)
-			self.draw_menu_text('Player 1 Color:', font, BLACK, self.screen, 20, 80)
-			self.draw_menu_text('Player 2 Color:', font, BLACK, self.screen, 20, 140)
-			self.draw_menu_text('Player 1 Bot:', font, BLACK, self.screen, 20, 200)
-			self.draw_menu_text('Player 2 Bot:', font, BLACK, self.screen, 20, 260)
-			self.draw_menu_text('Game Style:', font, BLACK, self.screen, 20, 320)
+			self.draw_menu_text('Main Menu', font, BLACK, self.screen, self.window_size//2 - 100, 20)
+			self.draw_menu_text('Player 1 Color:', font, BLACK, self.screen, self.window_size//2 - 200, 80)
+			self.draw_menu_text('Player 2 Color:', font, BLACK, self.screen, self.window_size//2 - 200, 140)
+			self.draw_menu_text('Player 1 Bot:', font, BLACK, self.screen, self.window_size//2 - 200, 200)
+			self.draw_menu_text('Player 2 Bot:', font, BLACK, self.screen, self.window_size//2 - 200, 260)
+			self.draw_menu_text('Game Style:', font, BLACK, self.screen, self.window_size//2 - 200, 320)
 
-			self.draw_menu_text('Start Game', font, BLACK, self.screen, 20, 480)
+			self.draw_menu_text('Start Game', font, BLACK, self.screen, self.window_size//2 - 100, 480)
 
-			pygame.draw.rect(self.screen, player1_color, (250, 80, 40, 40))
-			pygame.draw.rect(self.screen, player2_color, (250, 140, 40, 40))
-			self.draw_menu_text('Yes' if player1_bot else 'No', font, BLACK, self.screen, 250, 200)
-			self.draw_menu_text('Yes' if player2_bot else 'No', font, BLACK, self.screen, 250, 260)
-			self.draw_menu_text(game_style, font, BLACK, self.screen, 250, 320)
+			pygame.draw.rect(self.screen, player1_color, (self.window_size//2 + 100, 80, 40, 40))
+			pygame.draw.rect(self.screen, player2_color, (self.window_size//2 + 100, 140, 40, 40))
+			self.draw_menu_text('Yes' if player1_bot else 'No', font, BLACK, self.screen, self.window_size//2 + 100, 200)
+			self.draw_menu_text('Yes' if player2_bot else 'No', font, BLACK, self.screen, self.window_size//2 + 100, 260)
+			self.draw_menu_text(game_style, font, BLACK, self.screen, self.window_size//2 + 100, 320)
 
 			mx, my = pygame.mouse.get_pos()
 
-			button_player1_color = pygame.Rect(250, 80, 40, 40)
-			button_player2_color = pygame.Rect(250, 140, 40, 40)
-			button_player1_bot = pygame.Rect(250, 200, 60, 40)
-			button_player2_bot = pygame.Rect(250, 260, 60, 40)
-			button_game_style = pygame.Rect(250, 320, 150, 40)
-			button_start = pygame.Rect(20, 480, 200, 50)
+			button_player1_color = pygame.Rect(self.window_size//2 + 100, 80, 40, 40)
+			button_player2_color = pygame.Rect(self.window_size//2 + 100, 140, 40, 40)
+			button_player1_bot = pygame.Rect(self.window_size//2 + 100, 200, 60, 40)
+			button_player2_bot = pygame.Rect(self.window_size//2 + 100, 260, 60, 40)
+			button_game_style = pygame.Rect(self.window_size//2 + 100, 320, 150, 40)
+			button_start = pygame.Rect(self.window_size//2 - 100, 480, 200, 50)
 
 			if button_player1_color.collidepoint((mx, my)):
 				if pygame.mouse.get_pressed()[0]:
@@ -425,4 +433,14 @@ class Board:
 			if (self.location(x, y).piece.color == self.player2_color and y == 0) or (self.location(x, y).piece.color == self.player1_color and y == 7):
 				self.location(x, y).piece.crown()
 
+class Bot:
+    def __init__(self, game, depth=3):
+        self.game = game
+        self.depth = depth
+
+    def get_best_move(self):
+        best_move = None
+        best_value = float('-inf') if self.game.turn == self.game.player2_color else float('inf')
+        
+        
 
