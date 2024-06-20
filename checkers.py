@@ -446,7 +446,6 @@ class Bot:
         self.color = color
         self.enemy_color = enemy_color
         self.eval_color = color
-        self.evaluation = self.evaluate
         
     def step(self, board):
         best_move, best_choice, _ = self.minimax(self.depth - 1, board, 'max')
@@ -469,7 +468,7 @@ class Bot:
                 board_clone = deepcopy(board)
                 self.toggle_colors_and_turn()
                 self.action_on_board(board_clone, pos, action)
-                step_value = self.evaluation(board_clone)
+                step_value = self.evaluate(board_clone)
                 self.toggle_colors_and_turn()
 
                 if fn == 'max':
@@ -641,43 +640,29 @@ class Bot:
     def evaluate(self, board):
         score = 0
         num_pieces = 0
-        if(self.eval_color == self.game.player1_color):
-            for i in range(8):
-                for j in range(8):
-                    piece = board.location(i, j).piece
-                    if(piece is not None):
-                        num_pieces += 1
-                        if piece.color == self.eval_color and piece.is_king:
+        is_player1 = (self.eval_color == self.game.player1_color)
+
+        for x in range(8):
+            for y in range(8):
+                piece = board.location(x, y).piece
+                if piece is not None:
+                    num_pieces += 1
+                    if piece.color == self.eval_color:
+                        if piece.is_king:
                             score += 10
-                        elif piece.color != self.eval_color and piece.is_king:
+                        elif y < 4:
+                            score += 5 if is_player1 else 7
+                        else:
+                            score += 7
+                    else:
+                        if piece.is_king:
                             score -= 10
-                        elif piece.color == self.eval_color and j < 4:
-                            score += 5
-                        elif piece.color != self.eval_color and j < 4:
-                            score -= 7
-                        elif piece.color == self.eval_color and j >= 4:
-                            score += 7
-                        elif piece.color != self.eval_color and j >= 4:
+                        elif y < 4:
+                            score -= 7 if is_player1 else 5  # for sure?
+                        else:
                             score -= 5
-        else:
-            for i in range(8):
-                for j in range(8):
-                    piece = board.location(i, j).piece
-                    if(piece is not None):
-                        num_pieces += 1
-                        if piece.color == self.eval_color and piece.is_king:
-                            score += 10
-                        elif piece.color != self.eval_color and piece.is_king:
-                            score -= 10
-                        elif piece.color == self.eval_color and j < 4:
-                            score += 7
-                        elif piece.color != self.eval_color and j < 4:
-                            score -= 5
-                        elif piece.color == self.eval_color and j >= 4:
-                            score += 7
-                        elif piece.color != self.eval_color and j >= 4:
-                            score -= 5
-        return score / num_pieces
+
+        return score / num_pieces if num_pieces > 0 else 0
 
     def all_kings(self, board):
         for x in range(8):
